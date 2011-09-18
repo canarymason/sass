@@ -350,6 +350,12 @@ module Sass::Script
       end
       rv
     end
+    
+    # Define comparison function
+    # Ascending
+    def <=>(other)
+      value <=> other.value
+    end
 
     private
 

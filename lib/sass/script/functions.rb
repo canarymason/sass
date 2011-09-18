@@ -1298,6 +1298,46 @@ module Sass::Script
     end
     declare :append, [:list, :val]
     declare :append, [:list, :val, :separator]
+    
+    
+    # Sorts a list numerically or alphabetically
+    # 
+    # Sort in decending order by setting `$ascending` to false
+    #
+    # Unless the `$separator` argument is passed,
+    # if one list is comma-separated and one is space-separated,
+    # the first parameter's separator is used for the resulting list.
+    # If the lists have only one item each, spaces are used for the resulting list.
+    # 
+    # @example
+    #   sort(3 2 4 1) => 1 2 3 4
+    #   sort(3px 2px 4px 1px) => 1px 2px 3px 4px
+    #   sort(3 2 4 1, false) => 4 3 2 1
+    #   sort(lorum ipsum dolor sit amet) => amet dolor ipsum lorum sit
+    #   sort(lorum ipsum dolor sit amet, false) => sit lorum ipsum dolor amet
+    def sort(list, ascending = true, separator = Sass::Script::String.new("auto"))
+      assert_type separator, :String
+      unless %w[auto space comma].include?(separator.value)
+        raise ArgumentError.new("Separator name must be space, comma, or auto")
+      end
+      sep = list.separator if list.is_a?(Sass::Script::List)
+      if ascending == true
+        list = list.to_a.sort
+      else 
+        list = list.to_a.sort.reverse
+      end
+      Sass::Script::List.new(
+        list,
+        if separator.value == 'auto'
+          sep || :space
+        else
+          separator.value.to_sym
+        end)
+    end
+    declare :sort, [:list]
+    declare :sort, [:list, :direction]
+    declare :sort, [:list, :direction, :separator]
+    
 
     # Combines several lists into a single comma separated list
     # space separated lists.
