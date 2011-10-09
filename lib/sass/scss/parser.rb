@@ -89,14 +89,24 @@ module Sass
       end
 
       def process_comment(text, node)
-        single_line = text =~ /^\/\//
-        pre_str = single_line ? "" : @scanner.
-          string[0...@scanner.pos].
-          reverse[/.*?\*\/(.*?)($|\Z)/, 1].
-          reverse.gsub(/[^\s]/, ' ')
-        text = text.sub(/^\s*\/\//, '/*').gsub(/^\s*\/\//, ' *') + ' */' if single_line
-        comment = Sass::Tree::CommentNode.new(pre_str + text, single_line)
-        comment.line = @line - text.count("\n")
+        silent = text =~ /^\/\//
+        loud = !silent && text =~ %r{^/[/*]!}
+        line = @line - text.count("\n")
+
+        if silent
+          value = [text.sub(/^\s*\/\//, '/*').gsub(/^\s*\/\//, ' *') + ' */']
+        else
+          value = Sass::Engine.parse_interp(text, line, @scanner.pos - text.size, :filename => @filename)
+          value[0].slice!(2) if loud # get rid of the "!"
+          value.unshift(@scanner.
+            string[0...@scanner.pos].
+            reverse[/.*?\*\/(.*?)($|\Z)/, 1].
+            reverse.gsub(/[^\s]/, ' '))
+        end
+
+        type = if silent then :silent elsif loud then :loud else :normal end
+        comment = Sass::Tree::CommentNode.new(value, type)
+        comment.line = line
         node << comment
       end
 
@@ -511,7 +521,7 @@ module Sass
           @scanner.pos = pos
           @line = line
           begin
-            expected('"{"')
+            throw_error {expected('"{"')}
           rescue Sass::SyntaxError => e
             e.message << "\n\n\"#{sel}\" may only be used at the beginning of a selector."
             raise e
@@ -778,9 +788,15 @@ MESSAGE
         @strs.pop
       end
 
-      def str?
+      def str?(&block)
+        pos = @scanner.pos
+        line = @line
         @strs.push ""
-        yield && @strs.last
+        throw_error(&block) && @strs.last
+      rescue Sass::SyntaxError => e
+        @scanner.pos = pos
+        @line = line
+        nil
       ensure
         @strs.pop
       end
@@ -857,6 +873,13 @@ MESSAGE
       def err(msg)
         throw(:_sass_parser_error, true) if @throw_error
         raise Sass::SyntaxError.new(msg, :line => @line)
+      end
+
+      def throw_error
+        old_throw_error, @throw_error = @throw_error, false
+        yield
+      ensure
+        @throw_error = old_throw_error
       end
 
       def catch_error(&block)
