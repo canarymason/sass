@@ -55,12 +55,8 @@ class Sass::Tree::Visitors::Perform < Sass::Tree::Visitors::Base
   # Removes this node from the tree if it's a silent comment.
   def visit_comment(node)
     return [] if node.invisible?
-    if node.evaluated?
-      node.value.gsub!(/(^|[^\\])\#\{([^}]*)\}/) do |md|
-        $1+Sass::Script.parse($2, node.line, 0, node.options).perform(@environment).to_s
-      end
-      node.value = run_interp([Sass::Script::String.new(node.value)])
-    end
+    node.resolved_value = run_interp_no_strip(node.value)
+    node.resolved_value.gsub!(/\\([\\#])/, '\1')
     node
   end
 
@@ -314,14 +310,18 @@ END
     trace
   end
 
-  def run_interp(text)
+  def run_interp_no_strip(text)
     text.map do |r|
       next r if r.is_a?(String)
       val = r.perform(@environment)
       # Interpolated strings should never render with quotes
       next val.value if val.is_a?(Sass::Script::String)
       val.to_s
-    end.join.strip
+    end.join
+  end
+
+  def run_interp(text)
+    run_interp_no_strip(text).strip
   end
 
   def handle_include_loop!(node)

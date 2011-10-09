@@ -48,7 +48,22 @@ to support any vendor prefix, as well as the plain `:any` selector.
   are fully disallowed.
   They were deprecated in 3.1.8.
 
-## 3.1.8 (Unreleased)
+* `#{}` interpolation is now allowed in all comments.
+
+* The `!` flag may not be used with `//` comments (e.g. `//!`).
+
+## 3.1.10
+
+* Fix another aspect of the 3.1.8 regression relating to `+`.
+
+## 3.1.9
+
+* Fix a regression in 3.1.8 that broke the `+` combinator in selectors.
+
+* Deprecate the loud-comment flag when used with silent comments (e.g. `//!`).
+  Using it with multi-line comments (e.g. `/*!`) still works.
+
+## 3.1.8
 
 * Deprecate parent selectors followed immediately by identifiers (e.g. `&foo`).
   This should never have worked, since it violates the rule
@@ -78,6 +93,11 @@ to support any vendor prefix, as well as the plain `:any` selector.
 * Explicitly require Ruby >= 1.8.7 (thanks [Eric Mason](https://github.com/ericmason)).
 
 * Properly validate the nesting of elements in imported stylesheets.
+
+* Properly compile files in parent directories with `--watch` and `--update`.
+
+* Properly null out options in mixin definitions before caching them. This fixes
+  a caching bug that has been plaguing some Rails 3.1 users.
 
 ## 3.1.7
 

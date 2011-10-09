@@ -32,7 +32,7 @@ class Sass::Tree::Visitors::Convert < Sass::Tree::Visitors::Base
       visit(child) +
         if nxt &&
             (child.is_a?(Sass::Tree::CommentNode) &&
-              child.line + child.value.count("\n") + 1 == nxt.line) ||
+              child.line + child.lines + 1 == nxt.line) ||
             (child.is_a?(Sass::Tree::ImportNode) && nxt.is_a?(Sass::Tree::ImportNode) &&
               child.line + 1 == nxt.line) ||
             (child.is_a?(Sass::Tree::VariableNode) && nxt.is_a?(Sass::Tree::VariableNode) &&
@@ -49,8 +49,13 @@ class Sass::Tree::Visitors::Convert < Sass::Tree::Visitors::Base
   end
 
   def visit_comment(node)
+    value = node.value.map do |r|
+      next r if r.is_a?(String)
+      "\#{#{r.to_sass(@options)}}"
+    end.join
+
     content = if @format == :sass
-      content = node.value.gsub(/\*\/$/, '').rstrip
+      content = value.gsub(/\*\/$/, '').rstrip
       if content =~ /\A[ \t]/
         # Re-indent SCSS comments like this:
         #     /* foo
@@ -66,7 +71,7 @@ class Sass::Tree::Visitors::Convert < Sass::Tree::Visitors::Base
         else
           content.gsub!(/\n( \*|\/\/)/, "\n  ")
           spaces = content.scan(/\n( *)/).map {|s| s.first.size}.min
-          sep = node.silent ? "\n//" : "\n *"
+          sep = node.type == :silent ? "\n//" : "\n *"
           if spaces >= 2
             content.gsub(/\n  /, sep)
           else
@@ -74,25 +79,19 @@ class Sass::Tree::Visitors::Convert < Sass::Tree::Visitors::Base
           end
         end
 
-      content.gsub!(/\A\/\*/, '//') if node.silent
+      content.gsub!(/\A\/\*/, '//') if node.type == :silent
       content.gsub!(/^/, tab_str)
       content.rstrip + "\n"
     else
-      spaces = ('  ' * [@tabs - node.value[/^ */].size, 0].max)
-      content = if node.silent
-        node.value.gsub(/^[\/ ]\*/, '//').gsub(/ *\*\/$/, '')
+      spaces = ('  ' * [@tabs - value[/^ */].size, 0].max)
+      content = if node.type == :silent
+        value.gsub(/^[\/ ]\*/, '//').gsub(/ *\*\/$/, '')
       else
-        node.value
+        value
       end.gsub(/^/, spaces) + "\n"
       content
     end
-    if node.loud
-      if node.silent
-        content.gsub!(%r{^\s*(//!?)}, '//!')
-      else
-        content.sub!(%r{^\s*(/\*)}, '/*!')
-      end
-    end
+    content.sub!(%r{^\s*(/\*)}, '/*!') if node.type == :loud
     content
   end
 
@@ -200,7 +199,7 @@ class Sass::Tree::Visitors::Convert < Sass::Tree::Visitors::Base
     elsif @format == :scss
       name = selector_to_scss(node.rule)
       res = name + yield
-      if node.children.last.is_a?(Sass::Tree::CommentNode) && node.children.last.silent
+      if node.children.last.is_a?(Sass::Tree::CommentNode) && node.children.last.type == :silent
         res.slice!(-3..-1)
         res << "\n" << tab_str << "}\n"
       end
