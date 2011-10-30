@@ -965,6 +965,21 @@ MSG
     assert_error_message("Separator name must be space, comma, or auto for `append'", "append(1, 2, baboon)")
   end
 
+  def test_sort
+    assert_equal("1 2 3", evaluate("sort(3 1 2)"))
+    assert_equal("1, 2, 3", evaluate("sort(3, 1, 2)"))
+    assert_equal("dolor ipsum Lorem", evaluate("sort(Lorem dolor ipsum)"))
+    assert_equal("dolor, ipsum, Lorem", evaluate("sort(Lorem, dolor, ipsum)"))
+  end
+
+  def test_reverse
+    assert_equal("2 1 3", evaluate("reverse(3 1 2)"))
+    assert_equal("2, 1, 3", evaluate("reverse(3, 1, 2)"))
+    assert_equal("ipsum dolor Lorem", evaluate("reverse(Lorem dolor ipsum)"))
+    assert_equal("ipsum, dolor, Lorem", evaluate("reverse(Lorem, dolor, ipsum)"))
+    assert_equal("5, 4 1, 3, 2", evaluate("reverse(2, 3, (4 1), 5)"))
+  end
+
   def test_zip
     assert_equal("1 3 5, 2 4 6", evaluate("zip(1 2, 3 4, 5 6)"))
     assert_equal("1 4 7, 2 5 8", evaluate("zip(1 2 3, 4 5 6, 7 8)"))

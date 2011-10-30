@@ -241,7 +241,7 @@ module Sass::Script
     #   to {Sass::Script::Literal}s as the last argument.
     #   In addition, if this is true and `:var_args` is not,
     #   Sass will ensure that the last argument passed is a hash.
-    # 
+    #
     # @example
     #   declare :rgba, [:hex, :alpha]
     #   declare :rgba, [:red, :green, :blue, :alpha]
@@ -1298,46 +1298,36 @@ module Sass::Script
     end
     declare :append, [:list, :val]
     declare :append, [:list, :val, :separator]
-    
-    
+
+
     # Sorts a list numerically or alphabetically
-    # 
-    # Sort in decending order by setting `$ascending` to false
     #
-    # Unless the `$separator` argument is passed,
-    # if one list is comma-separated and one is space-separated,
-    # the first parameter's separator is used for the resulting list.
-    # If the lists have only one item each, spaces are used for the resulting list.
-    # 
     # @example
     #   sort(3 2 4 1) => 1 2 3 4
     #   sort(3px 2px 4px 1px) => 1px 2px 3px 4px
-    #   sort(3 2 4 1, false) => 4 3 2 1
+    #   sort(3px, 2px, 4px, 1px) => 1px, 2px, 3px, 4px
     #   sort(lorum ipsum dolor sit amet) => amet dolor ipsum lorum sit
-    #   sort(lorum ipsum dolor sit amet, false) => sit lorum ipsum dolor amet
-    def sort(list, ascending = true, separator = Sass::Script::String.new("auto"))
-      assert_type separator, :String
-      unless %w[auto space comma].include?(separator.value)
-        raise ArgumentError.new("Separator name must be space, comma, or auto")
-      end
+    def sort(list)
       sep = list.separator if list.is_a?(Sass::Script::List)
-      if ascending == true
-        list = list.to_a.sort
-      else 
-        list = list.to_a.sort.reverse
-      end
-      Sass::Script::List.new(
-        list,
-        if separator.value == 'auto'
-          sep || :space
-        else
-          separator.value.to_sym
-        end)
+      list = list.to_a.sort
+      Sass::Script::List.new(list, sep)
     end
     declare :sort, [:list]
-    declare :sort, [:list, :direction]
-    declare :sort, [:list, :direction, :separator]
-    
+
+    # Reverses the order of items in a list
+    #
+    # @example
+    #   reverse(3 2 4 1) => 1 4 2 3
+    #   reverse(3px 2px 4px 1px) => 1px 2px 4px 1px
+    #   reverse(lorum ipsum dolor sit amet) => amet sit dolor ipsum lorum
+    def reverse(list)
+      sep = list.separator if list.is_a?(Sass::Script::List)
+      list = list.to_a.reverse
+      Sass::Script::List.new(list, sep)
+    end
+    declare :reverse, [:list]
+
+
 
     # Combines several lists into a single comma separated list
     # space separated lists.
