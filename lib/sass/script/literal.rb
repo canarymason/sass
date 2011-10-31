@@ -237,6 +237,12 @@ MSG
     end
     alias_method :to_sass, :to_s
 
+    # Define comparison function
+    # Ascending
+    def <=>(other)
+      raise Sass::SyntaxError.new("#{self.inspect} is not an number or a string.")
+    end
+
     protected
 
     # Evaluates the literal.

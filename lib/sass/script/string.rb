@@ -47,5 +47,12 @@ module Sass::Script
     def to_sass(opts = {})
       to_s
     end
+    
+    # Define comparison function
+    # Compare strings alphabetically regardless of case
+    def <=>(other)
+      value.downcase <=> other.value.downcase
+    end
+    
   end
 end

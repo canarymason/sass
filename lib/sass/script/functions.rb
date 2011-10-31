@@ -241,7 +241,7 @@ module Sass::Script
     #   to {Sass::Script::Literal}s as the last argument.
     #   In addition, if this is true and `:var_args` is not,
     #   Sass will ensure that the last argument passed is a hash.
-    # 
+    #
     # @example
     #   declare :rgba, [:hex, :alpha]
     #   declare :rgba, [:red, :green, :blue, :alpha]
@@ -1298,6 +1298,36 @@ module Sass::Script
     end
     declare :append, [:list, :val]
     declare :append, [:list, :val, :separator]
+
+
+    # Sorts a list numerically or alphabetically
+    #
+    # @example
+    #   sort(3 2 4 1) => 1 2 3 4
+    #   sort(3px 2px 4px 1px) => 1px 2px 3px 4px
+    #   sort(3px, 2px, 4px, 1px) => 1px, 2px, 3px, 4px
+    #   sort(lorum ipsum dolor sit amet) => amet dolor ipsum lorum sit
+    def sort(list)
+      sep = list.separator if list.is_a?(Sass::Script::List)
+      list = list.to_a.sort
+      Sass::Script::List.new(list, sep)
+    end
+    declare :sort, [:list]
+
+    # Reverses the order of items in a list
+    #
+    # @example
+    #   reverse(3 2 4 1) => 1 4 2 3
+    #   reverse(3px 2px 4px 1px) => 1px 2px 4px 1px
+    #   reverse(lorum ipsum dolor sit amet) => amet sit dolor ipsum lorum
+    def reverse(list)
+      sep = list.separator if list.is_a?(Sass::Script::List)
+      list = list.to_a.reverse
+      Sass::Script::List.new(list, sep)
+    end
+    declare :reverse, [:list]
+
+
 
     # Combines several lists into a single comma separated list
     # space separated lists.
